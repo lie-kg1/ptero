@@ -98,7 +98,7 @@ tools_menu() {
                 pause ;;
              9) 
                 echo -e "\n${YELLOW}Installing SSL...${NC}"
-                bash <(curl -s https://raw.githubusercontent.com/lie-kg1/hub/refs/heads/main/Codinghub/toolbox/mengssl.sh)
+                bash <(curl -s https://raw.githubusercontent.com/lie-kg1/hub/refs/heads/main/liekgCloud/toolbox/mengssl.sh)
                 pause ;;
             0) 
                 break ;;
