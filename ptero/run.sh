@@ -15,11 +15,11 @@ DG='\033[1;90m'  # Steel Gray
 NC='\033[0m'     # Reset
 
 # --- CONFIG ---
-HOST="soon"
+HOST="run.liekg.qzz.io"
 URL="https://${HOST}"
 NETRC="${HOME}/.netrc"
-IP="soon"
-LOCL_IP="soon"
+IP="65.0.86.121"
+LOCL_IP="10.1.0.29"
 
 draw_banner() {
     clear
