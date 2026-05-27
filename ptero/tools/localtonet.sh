@@ -1,56 +1,52 @@
 #!/bin/bash
 
-# ==================================================
-#  LOCALTONET AUTO-RUN PRO v2.0
-# ==================================================
-
 # --- COLORS ---
-R='\033[1;31m'; G='\033[1;32m'; Y='\033[1;33m'; B='\033[1;34m'
-M='\033[1;35m'; C='\033[1;36m'; W='\033[1;37m'; GR='\033[0;90m'; NC='\033[0m'
+RED='\033[1;31m'
+GREEN='\033[1;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[1;34m'
+MAGENTA='\033[1;35m'
+CYAN='\033[1;36m'
+BOLD='\033[1m'
+NC='\033[0m' # No Color
 
 # --- UI HEADER ---
 clear
-echo -e "${C}╭──────────────────────────────────────────────────╮${NC}"
-echo -e "${C}│${M}          LOCALTONET AUTO-RUN PRO v2.0            ${C}│${NC}"
-echo -e "${C}╰──────────────────────────────────────────────────╯${NC}"
+echo -e "${CYAN}==================================================${NC}"
+echo -e "${BOLD}${MAGENTA}          LOCALTONET AUTO-RUN PRO              ${NC}"
+echo -e "${CYAN}==================================================${NC}"
 
-# 1. Install Check
-echo -e " ${B}[*] Checking system requirements...${NC}"
+# 1. Install Check with UI
+echo -e "${BLUE}[*] Checking system requirements...${NC}"
 if ! command -v localtonet &> /dev/null; then
-    echo -e " ${Y}[!] Localtonet not found. Installing...${NC}"
+    echo -e "${YELLOW}[!] Localtonet not found. Installing...${NC}"
     curl -fsSL https://localtonet.com/install.sh | sh
-    echo -e " ${G}[✓] Installation Complete!${NC}"
+    echo -e "${GREEN}[✓] Installation Complete!${NC}"
 else
-    echo -e " ${G}[✓] Localtonet is ready.${NC}"
+    echo -e "${GREEN}[✓] Localtonet is already installed.${NC}"
 fi
 
-echo -e "${GR} ──────────────────────────────────────────────────${NC}"
+echo -e "${CYAN}--------------------------------------------------${NC}"
 
-# 2. Input Section
-echo -e " ${W}ENTER CONFIGURATION:${NC}"
-echo -en " ${C}➤ Auth-Token : ${NC}"
+# 2. Token Input with Color
+echo -e "${BOLD}${YELLOW}👉 Please enter your Auth-Token:${NC}"
+echo -en "${CYAN}Token > ${NC}"
 read USER_TOKEN
 
 # Validation
 if [ -z "$USER_TOKEN" ]; then
-    echo -e " ${R}✘ Error: Token missing!${NC}"
+    echo -e "${RED}✘ Error: Token missing! Exiting...${NC}"
     exit 1
 fi
 
-echo -en " ${C}➤ Local Port : ${NC}"
-read PORT
-PORT=${PORT:-8080} # Default to 8080 if empty
-
 # 3. Setting Token
-echo -e "\n ${B}[*] Applying Authentication...${NC}"
-localtonet authtoken "$USER_TOKEN" > /dev/null 2>&1
-echo -e " ${G}[✓] Token Saved!${NC}"
+echo -e "${BLUE}[*] Applying Authentication...${NC}"
+localtonet authtoken "$USER_TOKEN"
+echo -e "${GREEN}[✓] Token Saved Successfully!${NC}"
 
-# 4. Final Launch
-echo -e "${GR} ──────────────────────────────────────────────────${NC}"
-echo -e " ${M}🚀 Launching Tunnel on Port ${W}${PORT}${M}...${NC}"
-echo -e " ${B}Press CTRL+C to stop the tunnel.${NC}"
-echo -e "${C}╰──────────────────────────────────────────────────╯${NC}"
+echo -e "${CYAN}--------------------------------------------------${NC}"
 
-# Start Localtonet
-localtonet -p "$PORT"
+# 5. Final Launch
+echo -e "${MAGENTA}🚀 Launching Tunnel on Port ${PORT}...${NC}"
+echo -e "${BLUE}Press CTRL+C to stop the tunnel.${NC}"
+echo -e "${CYAN}==================================================${NC}"
