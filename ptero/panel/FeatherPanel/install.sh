@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # ==================================================
-# FEATHERPANEL INSTALLER MODE (FIXED VERSION)
-# Stable • Safe • Production Ready
+# FEATHERPANEL INSTALLER MODE (FIXED + STABLE)
 # ==================================================
 
 set -e
@@ -19,7 +18,6 @@ C_GRAY="\e[1;90m"
 line(){ echo -e "${C_GRAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"; }
 step(){ echo -e "${C_BLUE}➜ $1${C_RESET}"; }
 ok(){ echo -e "${C_GREEN}✔ $1${C_RESET}"; }
-warn(){ echo -e "${C_YELLOW}⚠ $1${C_RESET}"; }
 fail(){ echo -e "${C_RED}✘ $1${C_RESET}"; }
 
 clear
@@ -71,7 +69,12 @@ line
 step "Installing dependencies..."
 
 apt update -y
-apt install -y curl wget git unzip mariadb-server nginx php php-fpm openssl nodejs npm
+apt install -y curl wget git unzip mariadb-server nginx php php-fpm openssl
+
+# Node FIX (no npm conflict issues)
+step "Installing Node.js (clean method)..."
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt install -y nodejs
 
 ok "Dependencies installed"
 
@@ -84,23 +87,15 @@ curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin
 
 ok "Composer installed"
 
-# ---------------- NODE ----------------
-step "Node install..."
-
-npm install -g n
-n lts
-
-ok "Node installed"
-
 line
 
-# ---------------- PANEL CLONE ----------------
-step "Cloning panel..."
-
+# ---------------- PANEL PATH ----------------
 APP_DIR="/var/www/featherpanel"
 
 rm -rf "$APP_DIR"
 mkdir -p /var/www
+
+step "Cloning panel..."
 
 git clone https://github.com/mythicalltd/featherpanel.git "$APP_DIR" || {
   fail "Git clone failed"
@@ -114,17 +109,13 @@ line
 # ---------------- BACKEND ----------------
 step "Backend setup..."
 
-if [[ -d "$APP_DIR/backend" ]]; then
-  cd "$APP_DIR/backend"
-  if [[ -f "composer.json" ]]; then
-    COMPOSER_ALLOW_SUPERUSER=1 composer install
-    ok "Backend ready"
-  else
-    fail "composer.json missing"
-    exit 1
-  fi
+cd "$APP_DIR/backend" || exit 1
+
+if [[ -f "composer.json" ]]; then
+  COMPOSER_ALLOW_SUPERUSER=1 composer install
+  ok "Backend ready"
 else
-  fail "Backend folder missing"
+  fail "composer.json missing"
   exit 1
 fi
 
@@ -133,15 +124,12 @@ line
 # ---------------- FRONTEND ----------------
 step "Frontend build..."
 
-if [[ -d "$APP_DIR/frontend" ]]; then
-  cd "$APP_DIR/frontend"
-  npm install
-  npm run build
-  ok "Frontend built"
-else
-  fail "Frontend folder missing"
-  exit 1
-fi
+cd "$APP_DIR/frontend" || exit 1
+
+npm install
+npm run build
+
+ok "Frontend built"
 
 line
 
