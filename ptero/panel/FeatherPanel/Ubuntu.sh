@@ -1,12 +1,43 @@
-# Update the server
+#!/bin/bash
+
+set -e
+
+# ==============================
+# SYSTEM UPDATE
+# ==============================
 apt update && apt upgrade -y
-# Add "add-apt-repository" command
-apt -y install software-properties-common curl apt-transport-https ca-certificates gnupg
-# Add additional repositories for PHP, Redis, and MariaDB
+
+# ==============================
+# DEPENDENCIES
+# ==============================
+apt install -y software-properties-common curl apt-transport-https ca-certificates gnupg lsb-release
+
+# ==============================
+# ADD PHP REPO
+# ==============================
 LC_ALL=C.UTF-8 add-apt-repository -y ppa:ondrej/php
-# Update repositories list
 apt update
-# Add universe repository if you are on Ubuntu 18.04
-apt-add-repository universe
-# Install Dependencies
-apt -y install php8.5 php8.5-{common,cli,gd,mysql,mbstring,bcmath,xml,fpm,curl,zip,redis,mongodb,pgsql,pdo-pgsql} mariadb-server nginx tar unzip zip git redis-server make dos2unix
+
+# ==============================
+# ENABLE UNIVERSE
+# ==============================
+add-apt-repository -y universe
+apt update
+
+# ==============================
+# INSTALL STACK (SAFE VERSION)
+# ==============================
+
+apt install -y \
+php8.3 php8.3-cli php8.3-fpm php8.3-common \
+php8.3-mysql php8.3-mbstring php8.3-bcmath \
+php8.3-xml php8.3-curl php8.3-zip php8.3-gd \
+php8.3-redis php8.3-pgsql \
+mariadb-server nginx redis-server \
+tar unzip zip git make dos2unix
+
+# ==============================
+# DONE
+# ==============================
+echo "✔ Installation complete"
+php -v
