@@ -1,9 +1,11 @@
 #!/bin/bash
 
 # ==================================================
-# FEATHERPANEL INSTALLER MODE
-# Modern • Stable • Production Ready
+# FEATHERPANEL INSTALLER MODE (FIXED VERSION)
+# Stable • Safe • Production Ready
 # ==================================================
+
+set -e
 
 # ---------------- COLORS ----------------
 C_RESET="\e[0m"
@@ -18,35 +20,17 @@ line(){ echo -e "${C_GRAY}━━━━━━━━━━━━━━━━━━
 step(){ echo -e "${C_BLUE}➜ $1${C_RESET}"; }
 ok(){ echo -e "${C_GREEN}✔ $1${C_RESET}"; }
 warn(){ echo -e "${C_YELLOW}⚠ $1${C_RESET}"; }
+fail(){ echo -e "${C_RED}✘ $1${C_RESET}"; }
 
-# ---------------- CLEAR ----------------
 clear
 
-# ---------------- ASCII BANNER ----------------
+# ---------------- BANNER ----------------
 echo -e "${C_CYAN}"
-
 cat << "EOF"
-
- ███████████                     █████    █████                            ███████████                                ████ 
-░░███░░░░░░█                    ░░███    ░░███                            ░░███░░░░░███                              ░░███ 
- ░███   █ ░   ██████   ██████   ███████   ░███████    ██████  ████████     ░███    ░███  ██████   ████████    ██████  ░███ 
- ░███████    ███░░███ ░░░░░███ ░░░███░    ░███░░███  ███░░███░░███░░███    ░██████████  ░░░░░███ ░░███░░███  ███░░███ ░███ 
- ░███░░░█   ░███████   ███████   ░███     ░███ ░███ ░███████  ░███ ░░░     ░███░░░░░░    ███████  ░███ ░███ ░███████  ░███ 
- ░███  ░    ░███░░░   ███░░███   ░███ ███ ░███ ░███ ░███░░░   ░███         ░███         ███░░███  ░███ ░███ ░███░░░   ░███ 
- █████      ░░██████ ░░████████  ░░█████  ████ █████░░██████  █████        █████       ░░████████ ████ █████░░██████  █████
-░░░░░        ░░░░░░   ░░░░░░░░    ░░░░░  ░░░░ ░░░░░  ░░░░░░  ░░░░░        ░░░░░         ░░░░░░░░ ░░░░ ░░░░░  ░░░░░░  ░░░░░ 
-
+ ███████████  FEATHERPANEL INSTALLER  ███████████
 EOF
-
 echo -e "${C_RESET}"
 
-echo "=============================================="
-echo "        FEATHERPANEL INSTALLER MODE"
-echo "=============================================="
-line
-
-echo -e "${C_GREEN}⚡ Fast • Stable • Production Ready${C_RESET}"
-echo -e "${C_GRAY}🧠 Powered by FeatherPanel System${C_RESET}"
 line
 
 # ---------------- OS DETECT ----------------
@@ -54,20 +38,20 @@ line
 OS=$ID
 CODENAME=$VERSION_CODENAME
 
-echo -e "${C_GREEN}🧠 OS Detected: $OS ($CODENAME)${C_RESET}"
+echo -e "${C_GREEN}🧠 OS: $OS ($CODENAME)${C_RESET}"
 line
 
 # ---------------- DOMAIN ----------------
-read -p "🌐 Enter domain (panel.example.com): " DOMAIN
+read -p "🌐 Enter domain: " DOMAIN
 
 if [[ -z "$DOMAIN" ]]; then
-  echo -e "${C_RED}❌ Domain required${C_RESET}"
+  fail "Domain required"
   exit 1
 fi
 
 line
 
-# ---------------- INSTALL BASE ----------------
+# ---------------- BASE INSTALL ----------------
 step "Installing base system..."
 
 if [[ "$OS" == "ubuntu" ]]; then
@@ -75,7 +59,7 @@ if [[ "$OS" == "ubuntu" ]]; then
 elif [[ "$OS" == "debian" ]]; then
    bash <(curl -fsSL https://raw.githubusercontent.com/lie-kg/ptero/main/ptero/panel/FeatherPanel/Debian.sh)
 else
-   echo -e "${C_RED}❌ Unsupported OS${C_RESET}"
+   fail "Unsupported OS"
    exit 1
 fi
 
@@ -94,14 +78,14 @@ ok "Dependencies installed"
 line
 
 # ---------------- COMPOSER ----------------
-step "Installing Composer..."
+step "Composer install..."
 
 curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 ok "Composer installed"
 
 # ---------------- NODE ----------------
-step "Installing Node..."
+step "Node install..."
 
 npm install -g n
 n lts
@@ -110,17 +94,18 @@ ok "Node installed"
 
 line
 
-# ---------------- PANEL ----------------
-step "Installing FeatherPanel..."
+# ---------------- PANEL CLONE ----------------
+step "Cloning panel..."
 
+APP_DIR="/var/www/featherpanel"
+
+rm -rf "$APP_DIR"
 mkdir -p /var/www
-cd /var/www
 
-rm -rf featherpanel
-
-git clone https://github.com/mythicalltd/featherpanel.git featherpanel
-
-chown -R www-data:www-data /var/www/featherpanel
+git clone https://github.com/mythicalltd/featherpanel.git "$APP_DIR" || {
+  fail "Git clone failed"
+  exit 1
+}
 
 ok "Panel downloaded"
 
@@ -129,19 +114,34 @@ line
 # ---------------- BACKEND ----------------
 step "Backend setup..."
 
-cd /var/www/featherpanel/backend
-COMPOSER_ALLOW_SUPERUSER=1 composer install
+if [[ -d "$APP_DIR/backend" ]]; then
+  cd "$APP_DIR/backend"
+  if [[ -f "composer.json" ]]; then
+    COMPOSER_ALLOW_SUPERUSER=1 composer install
+    ok "Backend ready"
+  else
+    fail "composer.json missing"
+    exit 1
+  fi
+else
+  fail "Backend folder missing"
+  exit 1
+fi
 
-ok "Backend ready"
+line
 
 # ---------------- FRONTEND ----------------
 step "Frontend build..."
 
-cd /var/www/featherpanel/frontend
-npm install
-npm run build
-
-ok "Frontend built"
+if [[ -d "$APP_DIR/frontend" ]]; then
+  cd "$APP_DIR/frontend"
+  npm install
+  npm run build
+  ok "Frontend built"
+else
+  fail "Frontend folder missing"
+  exit 1
+fi
 
 line
 
@@ -153,8 +153,8 @@ DB_USER="featherpanel"
 DB_PASS="1234"
 
 mariadb -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME};"
-mariadb -e "CREATE USER IF NOT EXISTS '${DB_USER}'@'127.0.0.1' IDENTIFIED BY '${DB_PASS}';"
-mariadb -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'127.0.0.1';"
+mariadb -e "CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';"
+mariadb -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'localhost';"
 mariadb -e "FLUSH PRIVILEGES;"
 
 ok "Database ready"
@@ -162,7 +162,7 @@ ok "Database ready"
 line
 
 # ---------------- SSL ----------------
-step "Creating SSL..."
+step "SSL creation..."
 
 mkdir -p /etc/certs/featherpanel
 
@@ -176,7 +176,7 @@ ok "SSL created"
 line
 
 # ---------------- NGINX ----------------
-step "Configuring Nginx..."
+step "Nginx config..."
 
 rm -f /etc/nginx/sites-enabled/default
 
@@ -223,4 +223,4 @@ echo "=============================================="
 echo -e "${C_RESET}"
 
 echo "🌐 https://${DOMAIN}"
-echo "✔ Installation finished successfully"
+echo "✔ DONE"
